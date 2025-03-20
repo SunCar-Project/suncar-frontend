@@ -1,26 +1,54 @@
 <template>
-  <img alt="Vue logo" src="./assets/logo.png">
-  <HelloWorld msg="Welcome to Your Vue.js App"/>
+  <div id="app">
+    <Header />
+    <main class="main-content">
+      <router-view />
+    </main>
+    <Footer />
+  </div>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
+import Footer from './components/layout/Footer.vue';
+import Header from './components/layout/Header.vue';
+import { useAuthStore } from '@/stores/auth.js';
 
 export default {
   name: 'App',
   components: {
-    HelloWorld
+    Header: Header,
+    Footer: Footer
+  },
+
+  setup() {
+    const authStore = useAuthStore();
+
+    // 앱 시작 시 인증 상태 확인
+    authStore.checkAuth();
+
+    return {};
   }
-}
+
+};
 </script>
 
 <style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Arial', sans-serif;
+  line-height: 1.6;
+  color: #333;
+}
+
+.main-content {
+  min-height: calc(100vh - 300px);
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 </style>
