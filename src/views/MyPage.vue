@@ -46,10 +46,17 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, onMounted } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 
 const authStore = useAuthStore();
+
+// 마이페이지 진입 시 사용자 정보가 없다면 api 호출해서 가져온다
+onMounted(async () => {
+    if (authStore.isLoggedIn && !authStore.user) {
+        await authStore.loadUser();
+    }
+});
 
 /**
  * computed를 사용하는 이유
