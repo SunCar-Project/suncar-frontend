@@ -44,36 +44,28 @@
   </div>
 </template>
 <script>
-import { useAuthStore } from '@/stores/auth';
-import { ref } from 'vue';
-
 export default {
-  name: 'LoginPage',
+  name: 'LoginComponent'
+}
+</script>
 
-  setup() {
-    const authStore = useAuthStore();
-    const userId = ref('');
-    const userPassword = ref('');
+<script setup>
+import { ref } from 'vue';
+import { useAuthStore } from '@/stores/auth';
 
-    const handleLogin = async () => {
-      try {
-        await authStore.login(userId.value, userPassword.value);
-        // 로그인 성공 처리는 스토어 내에서 이루어짐
-      }
-      catch (error) {
-        // 에러 처리는 스토어 내에서 이루어짐
-      }
-    };
+const authStore = useAuthStore();
 
-    return {
-      userId,
-      userPassword,
-      authStore,
-      handleLogin
-    };
-  }
+const userId = ref('');
+const userPassword = ref('');
+const isLoading = ref(false);
+
+const handleLogin = async () => {
+  isLoading.value = true;
+  await authStore.login(userId.value, userPassword.value);
+  isLoading.value = false;
 };
 </script>
+
 <style>
   .login-container {
     display: flex;
