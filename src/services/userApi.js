@@ -10,9 +10,26 @@ export default {
     */
     getCurrentUser() {
         return axios.get(`${API_URL}/me`, {
+            // config
             headers: {
                 Authorization: `Bearer ${localStorage.getItem('accessToken')}`
             }
         });
+    },
+
+    updateCurrentUser(form) {
+        return axios.patch(`${API_URL}/me`,
+            {
+                // data
+                "userName": form.userName,
+                "phoneNumber": form.phoneNumber
+            },
+            {
+                // config
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem('accessToken')}`
+                }
+            }
+        );
     }
 }
