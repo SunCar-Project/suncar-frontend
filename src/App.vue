@@ -8,28 +8,20 @@
   </div>
 </template>
 
-<script>
+<script setup>
 import Footer from './components/layout/Footer.vue';
 import Header from './components/layout/Header.vue';
 import { useAuthStore } from '@/stores/auth.js';
+import { onMounted } from 'vue';
 
-export default {
-  name: 'App',
-  components: {
-    Header: Header,
-    Footer: Footer
-  },
+const authStore = useAuthStore();
 
-  setup() {
-    const authStore = useAuthStore();
-
-    // 앱 시작 시 인증 상태 확인
-    authStore.checkAuth();
-
-    return {};
+// 앱 시작 시 인증 상태 확인 및 사용자 정보 로드
+onMounted(async () => {
+  if (authStore.checkAuth()) {
+    await authStore.loadUser();
   }
-
-};
+})
 </script>
 
 <style>

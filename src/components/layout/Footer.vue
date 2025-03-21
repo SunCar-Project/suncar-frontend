@@ -6,15 +6,6 @@
                 <p>선규와 함께하는 신나는 중고차거래</p>
             </div>
             <div class="footer-section">
-                <h3>링크</h3>
-                <ul>
-                    <li><router-link to="/">홈</router-link></li>
-                    <li><router-link to="/about">소개</router-link></li>
-                    <li><router-link to="/services">서비스</router-link></li>
-                    <li><router-link to="/contact">연락처</router-link></li>
-                </ul>
-            </div>
-            <div class="footer-section">
                 <h3>연락처</h3>
                 <p>이메일: ysk9526@gmail.com</p>
                 <p>전화: 010-1234-5678</p>
@@ -29,7 +20,7 @@
 <script>
 export default {
     name: 'FooterComponent'
-};
+}
 </script>
 
 <style>

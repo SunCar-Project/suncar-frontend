@@ -9,7 +9,7 @@ export default {
      * @param {string} userId - 사용자 아이디
      * @param {string} password - 사용자 비밀번호
      * 
-     * @returns {Promise} 로그인 결과를 담은 Promise 객체
+     * @returns {Promise} 로그인 결과
      */
     login(userId, password) {
         return axios.post(`${API_URL}/login`, { userId, password });
@@ -26,7 +26,7 @@ export default {
      * @param {string} userData.phoneNumber - 사용자 전화번호
      * @param {string} userData.role - 사용자 권한
      * 
-     * @returns {Promise} 회원가입 결과를 담은 Promise 객체
+     * @returns {Promise} 회원가입 결과
      */
     signup(userData) {
         return axios.post(`${API_URL}/signup`, userData);
