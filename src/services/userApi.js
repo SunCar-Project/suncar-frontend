@@ -17,6 +17,11 @@ export default {
         });
     },
 
+    /**
+     * 
+     * @param {Object} form - 수정할 정보를 담은 객체
+     * @returns {Promise} - 수정된 사용자 정보
+     */
     updateCurrentUser(form) {
         return axios.patch(`${API_URL}/me`,
             {
