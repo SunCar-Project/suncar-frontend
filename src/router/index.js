@@ -7,29 +7,35 @@ const routes = [
   {
     path: "/",
     name: "Home",
-    component: Home,
+    component: Home
   },
   {
     path: "/login",
     name: "Login",
-    component: () => import("../views/Login.vue"),
+    component: () => import("../views/Login.vue")
   },
   {
     path: "/signup",
     name: "SignUp",
-    component: () => import("../views/SignUp.vue"),
+    component: () => import("../views/SignUp.vue")
   },
   {
     path: "/mypage",
     name: "MyPage",
     component: () => import("../views/MyPage.vue"),
-    meta: { requiresAuth: true },
+    meta: { requiresAuth: true }
   },
   {
     path: "/carList",
     name: "CarList",
-    component: () => import("../views/CarList.vue"),
+    component: () => import("../views/CarList.vue")
   },
+  {
+    path: "/registerCar",
+    name: "RegisterCar",
+    component: () => import("../views/RegisterCar.vue"),
+    meta: { requiresAuth: true }
+  }
 ];
 
 const router = createRouter({
