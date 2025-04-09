@@ -35,6 +35,11 @@ const routes = [
     name: "RegisterCar",
     component: () => import("../views/RegisterCar.vue"),
     meta: { requiresAuth: true }
+  },
+  {
+    path: "/carDetail/:listingId",
+    name: "CarDetail",
+    component: () => import("../views/CarDetail.vue")
   }
 ];
 

@@ -1,7 +1,7 @@
 <template>
     <div class="register-car-container">
         <div class="register-car-card">
-            <h1 class="register-car-title">차량 등록</h1>
+            <h1 class="register-car-title">차량 판매</h1>
             
             <form class="car-info" @submit.prevent="handleSubmit">
                 <div class="info-group">
@@ -66,7 +66,7 @@
 
                 <div class="register-car-footer">
                     <button type="submit" id="register-car-button">
-                        차량 등록
+                        등록
                     </button>
                     <button type="button" id="cancel-button" @click="goBack">
                         취소

@@ -54,5 +54,9 @@ export default {
                 'Content-Type': 'application/json'
             }
         });
+    },
+
+    getCarDetailByListingId(listingId) {
+        return apiClient.get(`/${listingId}`);
     }
 }

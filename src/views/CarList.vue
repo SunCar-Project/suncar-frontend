@@ -10,7 +10,12 @@
         </div>
         
         <div v-else class="car-grid">
-          <div v-for="car in cars" :key="car.carListingId" class="car-item">
+          <div
+            v-for="car in cars"
+            :key="car.carListingId"
+            class="car-item"
+            @click="goToCarDetail(car.carListingId)"
+          >
             <div class="car-image">
               <img :src="car.mainImageUrl" alt="차량 이미지">
             </div>
@@ -31,9 +36,11 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import carApi from '@/services/carApi';
 import formatKoreanPrice from '@/utils/formatters';
 
+const router = useRouter();
 const formatPrice = formatKoreanPrice;
 
 const cars = ref([]);
@@ -55,6 +62,14 @@ onMounted(async () => {
         loading.value = false;
     }
 });
+
+/** 차량 상세 페이지로 이동 */
+const goToCarDetail = (carListingId) => {
+  router.push({
+    name: 'CarDetail',
+    params: { listingId: carListingId}
+  });
+}
 
 </script>
 
@@ -107,6 +122,7 @@ onMounted(async () => {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   transition: transform 0.3s, box-shadow 0.3s;
   background-color: white;
+  cursor: pointer;
 }
 
 .car-item:hover {
