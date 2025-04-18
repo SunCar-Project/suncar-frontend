@@ -36,10 +36,18 @@ apiClient.interceptors.response.use(
 );
 
 export default {
+
+    /** 모든 판매 차량 목록 조회 */
     getCarList() {
         return apiClient.get('');
     },
+
+    /** 내 판매차량 목록 조회 */
+    getMyCarList() {
+        return apiClient.get('/me');
+    },
     
+    /** 차량 판매등록 */
     registerCar(registerCarData) {
         return apiClient.post('', registerCarData, {
             headers: {
@@ -48,6 +56,7 @@ export default {
         });
     },
 
+    /** 차량 판매등록 - 더미 데이터 */
     registerCarDummy(registerCarDummyData) {
         return apiClient.post('/dummy', registerCarDummyData, {
             headers: {
@@ -56,7 +65,18 @@ export default {
         });
     },
 
+    /** 차량 상세 조회 */
     getCarDetailByListingId(listingId) {
         return apiClient.get(`/${listingId}`);
+    },
+
+    /** 차량 정보 수정 (가격, 설명) */
+    updateCarInfo(listingId, data) {
+        return apiClient.patch(`/${listingId}`, data);
+    },
+
+    /** 차량 삭제 */
+    deleteCar(listingId) {
+        return apiClient.delete(`/${listingId}`);
     }
 }
