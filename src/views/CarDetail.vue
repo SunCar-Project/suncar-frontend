@@ -214,8 +214,46 @@
                 </div>
 
                 <div class="car-action-buttons">
-                    <button class="contact-button">판매자와 연락하기</button>
-                    <button class="back-button" @click="goBack">목록으로 돌아가기</button>
+                    <div class="left-buttons">
+                        <button class="contact-button">판매자와 연락하기</button>
+                        <button class="back-button" @click="goBack">목록으로 돌아가기</button>
+                    </div>
+                    <div class="right-buttons">
+                        <button class="edit-button" @click="openEditModal">차량정보 수정</button>
+                        <button class="delete-button" @click="confirmDelete">차량 삭제</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 수정 모달 -->
+        <div v-if="showEditModal" class="modal-overlay" @click.self="closeEditModal">
+            <div class="modal-content">
+                <h2 class="modal-title">차량 정보 수정</h2>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="price">판매 가격</label>
+                        <input 
+                            type="number" 
+                            id="price" 
+                            v-model="editForm.price" 
+                            class="modal-input"
+                            placeholder="가격을 입력하세요"
+                        />
+                    </div>
+                    <div class="form-group">
+                        <label for="description">판매 설명</label>
+                        <textarea 
+                            id="description" 
+                            v-model="editForm.description" 
+                            class="modal-textarea"
+                            placeholder="차량에 대한 설명을 입력하세요"
+                        ></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="cancel-button" @click="closeEditModal">취소</button>
+                    <button class="confirm-button" @click="updateCarInfo">수정하기</button>
                 </div>
             </div>
         </div>
@@ -225,17 +263,26 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { useAuthStore } from '@/stores/auth';
 import carApi from '@/services/carApi';
 import formatKoreanPrice from '@/utils/formatters';
 
 const route = useRoute();
 const router = useRouter();
+const authStore = useAuthStore();
 const formatPrice = formatKoreanPrice;
 
 const car = ref({});
 const loading = ref(true);
 const error = ref(null);
 const selectedImage = ref(''); // 선택된 이미지 URL
+
+// 수정 관련 상태
+const showEditModal = ref(false);
+const editForm = ref({
+    price: 0,
+    description: ''
+});
 
 /** 날짜 포맷팅 */
 const formatDate = (dateString) => {
@@ -278,6 +325,84 @@ onMounted(async () => {
 const goBack = () => {
     router.push('/carList');
 };
+
+/** 수정 모달 열기 */
+const openEditModal = () => {
+    if (!authStore.isLoggedIn) {
+        alert('로그인이 필요한 기능입니다.');
+        return;
+    }
+
+    // 현재 값으로 폼 초기화
+    editForm.value.price = car.value.price;
+    editForm.value.description = car.value.description || '';
+    showEditModal.value = true;
+};
+
+/** 수정 모달 닫기 */
+const closeEditModal = () => {
+    showEditModal.value = false;
+};
+
+/** 차량 정보 업데이트 */
+const updateCarInfo = async () => {
+    if (!editForm.value.price || editForm.value.price <= 0) {
+        alert('가격을 올바르게 입력해주세요.');
+        return;
+    }
+
+    try {
+        const listingId = route.params.listingId;
+        // PATCH 요청으로 차량 정보 업데이트
+        await carApi.updateCarInfo(listingId, editForm.value);
+
+        // 성공 시 정보 갱신
+        car.value.price = editForm.value.price;
+        car.value.description = editForm.value.description;
+
+        closeEditModal();
+        alert('차량 정보가 성공적으로 수정되었습니다.');
+    } catch (err) {
+        if (err.response && err.response.status === 403) {
+            alert('본인의 차량만 수정할 수 있습니다.');
+        } else {
+            console.error('차량 정보 수정 실패:', err);
+            alert('차량 정보 수정에 실패했습니다: ' + (err.response?.data?.message || err.message));
+        }
+    }
+};
+
+/** 차량 삭제 확인 */
+const confirmDelete = () => {
+    if (!authStore.isLoggedIn) {
+        alert('로그인이 필요한 기능입니다.');
+        return;
+    }
+
+    if (confirm('정말로 이 차량을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
+        deleteCar();
+    }
+};
+
+/** 차량 삭제 */
+const deleteCar = async () => {
+    try {
+        const listingId = route.params.listingId;
+        // DELETE 요청으로 차량 삭제
+        await carApi.deleteCar(listingId);
+
+        alert('차량이 성공적으로 삭제되었습니다.');
+        // 차량 목록 페이지로 이동
+        router.push('/carList');
+    } catch (err) {
+        if (err.response && err.response.status === 403) {
+            alert('본인의 차량만 삭제할 수 있습니다.');
+        } else {
+            console.error('차량 삭제 실패:', err);
+            alert('차량 삭제에 실패했습니다: ' + (err.response?.data?.message || err.message));
+        }
+    }
+};
 </script>
 
 <style>
@@ -286,6 +411,7 @@ const goBack = () => {
     justify-content: center;
     min-height: 80vh;
     padding: 20px;
+    position: relative;
 }
 
 .car-detail-card {
@@ -513,12 +639,19 @@ const goBack = () => {
 
 .car-action-buttons {
     display: flex;
-    gap: 15px;
+    justify-content: space-between;
     margin-top: 30px;
 }
 
+.left-buttons, .right-buttons {
+    display: flex;
+    gap: 15px;
+}
+
 .contact-button,
-.back-button {
+.back-button,
+.edit-button,
+.delete-button {
     padding: 12px 20px;
     border-radius: 6px;
     font-size: 1rem;
@@ -531,7 +664,6 @@ const goBack = () => {
     background-color: #4a6ee0;
     color: white;
     border: none;
-    flex: 1;
 }
 
 .contact-button:hover {
@@ -548,6 +680,121 @@ const goBack = () => {
     background-color: #e0e0e0;
 }
 
+.edit-button {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+}
+
+.edit-button:hover {
+    background-color: #45a049;
+}
+
+.delete-button {
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+}
+
+.delete-button:hover {
+    background-color: #c0392b;
+}
+
+/* 모달 스타일 */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background-color: white;
+    border-radius: 8px;
+    padding: 25px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.modal-title {
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 1.5rem;
+    color: #333;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+}
+
+.modal-body {
+    margin-bottom: 25px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #333;
+}
+
+.modal-input, .modal-textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+.modal-textarea {
+    min-height: 150px;
+    resize: vertical;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+}
+
+.cancel-button, .confirm-button {
+    padding: 10px 20px;
+    border-radius: 4px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.cancel-button {
+    background-color: #f0f0f0;
+    color: #333;
+    border: 1px solid #ddd;
+}
+
+.cancel-button:hover {
+    background-color: #e0e0e0;
+}
+
+.confirm-button {
+    background-color: #4a6ee0;
+    color: white;
+    border: none;
+}
+
+.confirm-button:hover {
+    background-color: #3a5ecc;
+}
+
 @media (max-width: 768px) {
     .usage-grid {
         grid-template-columns: 1fr;
@@ -555,6 +802,19 @@ const goBack = () => {
 
     .car-action-buttons {
         flex-direction: column;
+        gap: 15px;
+    }
+
+    .left-buttons, .right-buttons {
+        width: 100%;
+    }
+
+    .left-buttons {
+        margin-bottom: 10px;
+    }
+
+    .contact-button, .back-button, .edit-button, .delete-button {
+        flex: 1;
     }
 }
 </style>

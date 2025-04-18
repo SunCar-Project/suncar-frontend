@@ -3,7 +3,6 @@
         <div class="mypage-card">
             <h1 class="mypage-title">마이페이지</h1>
 
-            
             <form v-if="user" class="user-info" @submit.prevent="handleSubmit">
                 <div class="info-group">
                     <label>아이디</label>
@@ -61,27 +60,92 @@
                     </button>
                 </div>
             </form>
+
+            <!-- 내 차량 목록 보기 버튼 추가 -->
+            <div class="car-list-section">
+                <button 
+                    class="toggle-car-list-button" 
+                    @click="toggleCarList"
+                >
+                    {{ isCarListVisible ? '내 차량 목록 접기' : '내 차량 목록 보기' }}
+                </button>
+                
+                <!-- 접었다 펼칠 수 있는 차량 목록 섹션 -->
+                <div v-if="isCarListVisible" class="car-list-wrapper">
+                    <div class="carlist-container">
+                        <div class="carlist-card">
+                            <h2 class="carlist-title">내 판매중인 차량 목록</h2>
+                            
+                            <div v-if="loading" class="loading-message">로딩 중...</div>
+                            
+                            <div v-else-if="error" class="error-message">
+                                {{ error }}
+                            </div>
+                            
+                            <div v-else-if="myCars.length === 0" class="no-cars-message">
+                                판매중인 차량이 없습니다.
+                            </div>
+                            
+                            <div v-else class="car-grid">
+                                <div
+                                    v-for="car in myCars"
+                                    :key="car.carListingId"
+                                    class="car-item"
+                                    @click="goToCarDetail(car.carListingId)"
+                                >
+                                    <div class="car-image">
+                                        <img :src="car.mainImageUrl" alt="차량 이미지">
+                                    </div>
+                                    <div class="car-details">
+                                        <h3 class="car-name">{{ car.brandName }} {{ car.carName }}</h3>
+                                        <p class="car-price">{{ formatPrice(car.price) }}</p>
+                                        <div class="car-info">
+                                            <p>연료: {{ car.fuelType }}</p>
+                                            <p>연식: {{ car.year }}년 {{ car.month }}월</p>
+                                            <p>주행거리: {{ car.distance }}km</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </template>
 
 <script setup>
 import { computed, onMounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import userApi from "@/services/userApi";
+import carApi from '@/services/carApi';
+import formatKoreanPrice from '@/utils/formatters';
 
 const authStore = useAuthStore();
+const router = useRouter();
 const isEdit = ref(false);
 const editForm = ref({
     userName: '',
     phoneNumber: ''
 });
 
+// 차량 목록 관련 상태
+const isCarListVisible = ref(false);
+const myCars = ref([]);
+const loading = ref(false);
+const error = ref(null);
+const formatPrice = formatKoreanPrice;
+
 // 마이페이지 진입 시 사용자 정보가 없다면 api 호출해서 가져온다
 onMounted(async () => {
     if (authStore.isLoggedIn && !authStore.user) {
         await authStore.loadUser();
     }
+    
+    // 페이지 로드 시 내 차량 데이터를 미리 로드해둠
+    await loadMyCarList();
 });
 
 /**
@@ -96,7 +160,6 @@ const userId = computed(() => authStore.userId); // 사용자 id OR 게스트
 
 // 수정 모드
 const startEdit = () => {
-
     // 기존 값으로 폼 초기화
     editForm.value.userName = user.value.userName;
     editForm.value.phoneNumber = user.value.phoneNumber;
@@ -123,7 +186,39 @@ const handleSubmit = async () => {
     }
 }
 
+// 차량 목록 토글
+const toggleCarList = () => {
+    isCarListVisible.value = !isCarListVisible.value;
+}
+
+// 내 차량 목록 불러오기
+const loadMyCarList = async () => {
+    if (!authStore.isLoggedIn) return;
+
+    loading.value = true;
+    error.value = null;
+
+    try {
+        // 내 차량 목록 API 호출 - /me 엔드포인트 사용
+        const response = await carApi.getMyCarList();
+        myCars.value = response.data.data;
+    } catch (err) {
+        console.error('내 차량 목록 조회 실패:', err);
+        error.value = err.message || '차량 목록을 불러오지 못했습니다.';
+    } finally {
+        loading.value = false;
+    }
+}
+
+// 차량 상세 페이지로 이동
+const goToCarDetail = (carListingId) => {
+    router.push({
+        name: 'CarDetail',
+        params: { listingId: carListingId }
+    });
+}
 </script>
+
 <style>
 .mypage-container {
     display: flex;
@@ -135,7 +230,7 @@ const handleSubmit = async () => {
 
 .mypage-card {
     width: 100%;
-    max-width: 400px;
+    max-width: 800px;
     padding: 30px;
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
@@ -152,6 +247,7 @@ const handleSubmit = async () => {
     display: flex;
     flex-direction: column;
     gap: 20px;
+    margin-bottom: 30px;
 }
 
 .info-group {
@@ -196,7 +292,7 @@ const handleSubmit = async () => {
     text-decoration: underline;
 }
 
-#edit-profile-button {
+#edit-profile-button, .toggle-car-list-button {
     padding: 10px 20px;
     background-color: #86e4ad;
     color: white;
@@ -209,7 +305,7 @@ const handleSubmit = async () => {
     display: inline-block;
 }
 
-#edit-profile-button:hover {
+#edit-profile-button:hover, .toggle-car-list-button:hover {
     background-color: #6dbb8a;
 }
 
@@ -236,5 +332,116 @@ const handleSubmit = async () => {
 
 #save-profile-button:hover {
     background-color: #45a049;
+}
+
+/* 차량 목록 관련 스타일 */
+.car-list-section {
+    margin-top: 30px;
+    text-align: center;
+}
+
+.toggle-car-list-button {
+    margin: 0 auto;
+    display: block;
+}
+
+.car-list-wrapper {
+    margin-top: 20px;
+    transition: all 0.3s ease;
+}
+
+.carlist-container {
+    padding: 0;
+    min-height: auto;
+}
+
+.carlist-card {
+    width: 100%;
+    max-width: 100%;
+    padding: 20px;
+    box-shadow: none;
+    border: 1px solid #eee;
+}
+
+.carlist-title {
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+}
+
+.car-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.car-item {
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s, box-shadow 0.3s;
+    background-color: white;
+    cursor: pointer;
+}
+
+.car-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+}
+
+.car-image img {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+}
+
+.car-details {
+    padding: 15px;
+}
+
+.car-name {
+    margin: 0 0 8px 0;
+    font-size: 1.1rem;
+    color: #333;
+}
+
+.car-price {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.car-info {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    margin-bottom: 10px;
+}
+
+.car-info p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #555;
+}
+
+.loading-message {
+    text-align: center;
+    padding: 20px;
+    font-size: 1rem;
+    color: #666;
+}
+
+.error-message {
+    color: #e74c3c;
+    text-align: center;
+    padding: 20px;
+    font-size: 0.9rem;
+}
+
+.no-cars-message {
+    text-align: center;
+    padding: 20px;
+    font-size: 1rem;
+    color: #666;
 }
 </style>
